@@ -280,7 +280,7 @@ SeuratOBJ_QCed$orig.ident <- new_seurat
 ## Save Seurat QCed data
 
 rds_name <- here('processed-data/GEX_ATAC_preprocessing', paste0(base_name,'_QCed.rds'))
-saveRDS(SeuratOBJ_QCed, file = rds_name)
+#saveRDS(SeuratOBJ_QCed, file = rds_name)
 
 
 message('Seurat QCed saved!')   
