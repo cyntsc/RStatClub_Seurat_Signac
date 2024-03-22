@@ -24,11 +24,10 @@ library(here)
 
 here::here()
 
-# Check if processed_data directory exists, if not create it
+## Check if processed_data directory exists, if not create it
 if (!dir.exists(here("processed-data/GEX_ATAC_preprocessing/"))) {
     dir.create(here("processed-data/GEX_ATAC_preprocessing/"))
 }
-# Check if plot directory exists, if not create it
 if (!dir.exists(here("plots/GEX_ATAC_preprocessing/"))) {
     dir.create(here("plots/GEX_ATAC_preprocessing/"))
 }
@@ -40,7 +39,6 @@ if (!dir.exists(here("plots/GEX_ATAC_preprocessing/"))) {
 ## Flash-Frozen Human Healthy Brain Tissue (3k)
 
 sample_sample <- 'FFB_Healthy'
-#s_tissue <- 'human'
 
 message('Processing sample: ',sample_sample, ' from ', s_tissue, ' brain tissue.')
 
