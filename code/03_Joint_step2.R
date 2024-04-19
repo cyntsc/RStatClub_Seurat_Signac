@@ -1,14 +1,11 @@
 #########################################################################
 ##
-## RstatClub_3: Joint RNA and ATAC analysis
+## RstatClub_3: Joint RNA and ATAC analysis part 2
 ##
-## Input: Seurat with GEX and ATAC data
+## Input: Seurat with PCA, LSI and UMAPs
 ## Output: Seurat with joint RNA and ATAC information
-##         Stats and coverage plots to illustrate the rna and peak integration
+##         UMAPs and Coverage plots to illustrate de linked modalities
 ##
-
-## Authors. CSC 
-## Code implemented from: 
 ##
 ########################################################################
 
@@ -17,7 +14,7 @@ library(Seurat)
 library(Signac)   
 #library(SeuratDisk) # required to load the pre-defined annotation
 library(BSgenome.Hsapiens.UCSC.hg38)
-library(Matrix)
+#library(Matrix)
 library(dplyr)
 library(here)
 
@@ -47,19 +44,20 @@ SeuratOBJ@reductions
 DefaultAssay(SeuratOBJ) <- "SCT"
 
 p1 <- DimPlot(SeuratOBJ, reduction = "umap_rna") & NoLegend() #& NoAxes()
-head(VariableFeatures(SeuratOBJ))
+#head(VariableFeatures(SeuratOBJ))
 p2 <- FeaturePlot(SeuratOBJ,
-                  c("OBI1-AS1","RANBP3L","ADGRV1","LINC00499"), #cluster 1
+                  c("OBI1-AS1","RANBP3L","ADGRV1","LINC00499"),  #cluster 1
                   #c('RNASE1','DBNDD2', 'PPP1R14A', 'CRYAB'),    #cluster 3
                   #c('KCNIP4', 'ROBO2', 'DPP10', 'SLC1A2'),      # variable features
                   reduction = "umap_rna") & NoAxes() & NoLegend()
-p1 | p2
+plt1 <- p1 | p2
 
-
+png(filename = here(dir_plots, 'umap_fp_sct.png'))
+plt1
+dev.off()
 
 
 ## we can do clustering and cluster marker identification
-
 
 # SeuratOBJ <- FindNeighbors(SeuratOBJ, reduction = "pca",
 #                         dims = 1:ncol(Embeddings(SeuratOBJ,"pca")))
@@ -87,16 +85,18 @@ p1 | p2
 ##  Feature selection
 ##    select peaks being detected in sufficient number of cells in the data
 
-SeuratOBJ@reductions
 DefaultAssay(SeuratOBJ) <- "ATAC"
+SeuratOBJ@reductions
 
-p3 <- DimPlot(SeuratOBJ, reduction = "umap_atac") & NoLegend() #& NoAxes()
+p3 <- DimPlot(SeuratOBJ, reduction = "umap_atac") # & NoLegend() 
 #head(VariableFeatures(SeuratOBJ))
-p4 <- FeaturePlot(SeuratOBJ,
-                  'chr1-30718015-30718946',
-                  #c('chr3-93470143-93471053', 'chr1-30718015-30718946'),
-                  reduction = "umap_atac") & NoAxes() & NoLegend()
-p3 | p4
+
+png(filename = here(dir_plots, 'umap_atac.png'))
+p3
+dev.off()
+
+# Basic coverage plot
+CoveragePlot(SeuratOBJ, region = c('chr3-93470143-93471053', 'chr1-30718015-30718946'))
 
 
 
@@ -113,7 +113,7 @@ SeuratOBJ <- FindMultiModalNeighbors(SeuratOBJ,
                                   verbose = TRUE)
 
 # NOTES:
-#  In this example, we use the two dimension reduction representations (pca and lsi), when integration is done, it should be replaced with the integrated dimension reduction representations (css_rna and css_atac)
+#  In this example, we use the two dimension reduction pca and lsi, when integration is done, it should be replaced with the integrated dimension reduction representations (css_rna and css_atac)
 
 # knn.range = 200,  # number of approximate neighbors to compute
 # smooth = FALSE,   # Smoothing modality score across each individual modality neighbors
@@ -129,7 +129,6 @@ SeuratOBJ@graphs
 SeuratOBJ <- RunUMAP(SeuratOBJ, nn.name = "weighted.nn", assay = "RNA")
 
 ## The "wsnn" graph can be used for clustering
-
 SeuratOBJ <- FindClusters(SeuratOBJ, graph.name = "wsnn", resolution = 0.2)
 unique(SeuratOBJ$seurat_clusters)
 colnames(SeuratOBJ@meta.data)
@@ -143,8 +142,11 @@ p2 <- FeaturePlot(SeuratOBJ,
                   #c('RNASE1','DBNDD2', 'PPP1R14A', 'CRYAB'),    #cluster 3
                   #c('KCNIP4', 'ROBO2', 'DPP10', 'SLC1A2'),      # variable features
                   reduction = "umap") & NoAxes() & NoLegend()
-p1 | p2 
+plt <- p1 | p2 
 
+png(filename = here(dir_plots, 'umap_wsnn.png'))
+plt
+dev.off()
 
 rds_name <- here('processed-data/GEX_ATAC_preprocessing', paste0(base_name,'_WNN.rds'))
 saveRDS(SeuratOBJ, rds_name)
@@ -167,7 +169,11 @@ p2 <- FeaturePlot(SeuratOBJ,
                   #c('KCNIP4', 'ROBO2', 'DPP10', 'SLC1A2'),      # variable features
                   order=T,
                   reduction = "umap") & NoAxes() & NoLegend()
-p1 | p2
+plt <- p1 | p2
+
+png(filename = here(dir_plots, 'umap_wsnn_ann.png'))
+plt
+dev.off()
 
 
 
@@ -181,7 +187,7 @@ SeuratOBJ <- RegionStats(SeuratOBJ, genome = BSgenome.Hsapiens.UCSC.hg38)
 colnames(SeuratOBJ@meta.data)
 
 ## Find peaks that are correlated with the expression of nearby genes
-# For each gene, this function computes the correlation coefficient between the gene expression and accessibility of each peak within a given distance from the gene TSS, and computes an expected correlation coefficient for each peak given the GC content, accessibility, and length of the peak. The expected coefficient values for the peak are then used to compute a z-score and p-value.
+# For each gene, this function computes the correlation coefficient between the gene expression and accessibility of each peak within a given distance from the gene TSS, and computes an expected correlation coefficient for each peak. The expected coefficient values for the peak are then used to compute a z-score and p-value.
 
 SeuratOBJ <- LinkPeaks(
   object = SeuratOBJ,
@@ -195,6 +201,7 @@ SeuratOBJ <- LinkPeaks(
 
 
 ##  visualize these links using the CoveragePlot() function
+# Returns a Seurat object with the Links information set
 
 unique(Idents(SeuratOBJ))
 idents.plot <- c("Clust1", "Clust2", "Clust3")
@@ -220,7 +227,11 @@ p2 <- CoveragePlot(
   extend.downstream = 10000
 )
 p2
-p1 / p2
+plt <- p1 / p2
+
+png(filename = here(dir_plots, 'coverage_plt_extended_window.png'))
+plt
+dev.off()
 
 p3 <- CoveragePlot(
   object = SeuratOBJ,
@@ -246,14 +257,13 @@ p4 <- CoveragePlot(
 )
 p4
 
-p1 / p4
+plt <- p1 / p4
 
 
 ## Save RDS Object
 
 rds_name <- here('processed-data/GEX_ATAC_preprocessing', paste0(base_name,'_RNA_ATAC_join.rds'))
 saveRDS(SeuratOBJ, file = rds_name)
-message('Seurat with ATAC clusters saved!')  
 
 
 
