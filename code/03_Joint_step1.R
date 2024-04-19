@@ -1,22 +1,17 @@
 #########################################################################
 ##
-## RstatClub_3: Joint RNA and ATAC analysis
+## RstatClub_3: Joint RNA and ATAC analysis part 1
 ##
-## Input: Seurat with GEX and ATAC data
-## Output: Seurat with joint RNA and ATAC information
-##         Stats and coverage plots to illustrate the rna and peak integration
-##
-
-## Authors. CSC 
-## Code implemented from: 
+## Input:  Seurat with GEX and ATAC data
+## Output: Seurat with PCA, LSI and UMAPs
 ##
 ########################################################################
 
 # load libraries
 library(Seurat)   
 library(Signac)   
-library(SeuratDisk) # required to load the pre-defined annotation
-library(Matrix)
+# library(SeuratDisk) # required to load the pre-defined annotation
+# library(Matrix)
 library(dplyr)
 library(here)
 
